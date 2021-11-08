@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.yhw.playvideoinchatdemo.databinding.ActivityMainBinding
 import net.alhazmy13.mediapicker.Image.ImagePicker
 import net.alhazmy13.mediapicker.Video.VideoPicker
@@ -16,25 +17,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     private lateinit var binding: ActivityMainBinding
-//    private val launcher = registerImagePicker { images ->
-//        // Selected images are ready to use
-//        if(images.isNotEmpty()){
-//            val sampleImage = images[0]
-//            Glide.with(this@MainActivity)
-//                .load(sampleImage.uri)
-//                .into(imageView)
-//        }
-//    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(R.layout.activity_main)
+        setContentView(binding.root)
+
+        val viewAdapter = ChatRoomRecyclerViewAdapter()
+
+        with(binding.chatRecyclerView) {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = viewAdapter
+        }
 
         binding.sendButton.setOnClickListener {
-            val text = binding.textEditText.toString()
+            Log.i(TAG, "SEND!!")
+            val text = binding.textEditText.text.toString()
             if (text.isNotEmpty()) {
+                viewAdapter.add(MessageText(text))
                 binding.textEditText.text?.clear()
             }
         }
