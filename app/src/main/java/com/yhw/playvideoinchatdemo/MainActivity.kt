@@ -1,8 +1,10 @@
 package com.yhw.playvideoinchatdemo
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.yhw.playvideoinchatdemo.databinding.ActivityMainBinding
@@ -16,19 +18,24 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "MainActivity"
     }
 
-    private lateinit var binding: ActivityMainBinding
+    private val binding: ActivityMainBinding by lazy { ActivityMainBinding.inflate(layoutInflater) }
+    private val viewAdapter = ChatRoomRecyclerViewAdapter()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        val viewAdapter = ChatRoomRecyclerViewAdapter()
 
         with(binding.chatRecyclerView) {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = viewAdapter
+        }
+
+        binding.albumButton.setOnClickListener {
+            VideoPicker.Builder(this)
+                .mode(VideoPicker.Mode.CAMERA_AND_GALLERY)
+                .enableDebuggingMode(true)
+                .directory(VideoPicker.Directory.DEFAULT)
+                .build()
         }
 
         binding.sendButton.setOnClickListener {
@@ -37,26 +44,10 @@ class MainActivity : AppCompatActivity() {
             if (text.isNotEmpty()) {
                 viewAdapter.add(MessageText(text))
                 binding.textEditText.text?.clear()
+                (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
+                    .hideSoftInputFromWindow(binding.textEditText.windowToken, 0)
             }
         }
-
-//        ImagePicker.Builder(this@MainActivity)
-//            .mode(ImagePicker.Mode.CAMERA_AND_GALLERY)
-//            .compressLevel(ImagePicker.ComperesLevel.MEDIUM)
-//            .directory(ImagePicker.Directory.DEFAULT)
-//            .extension(ImagePicker.Extension.PNG)
-//            .scale(600, 600)
-//            .allowMultipleImages(false)
-//            .enableDebuggingMode(true)
-//            .build()
-
-        VideoPicker.Builder(this)
-            .mode(VideoPicker.Mode.CAMERA_AND_GALLERY)
-            .enableDebuggingMode(true)
-            .directory(VideoPicker.Directory.DEFAULT)
-            .build()
-
-
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -67,7 +58,7 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == VideoPicker.VIDEO_PICKER_REQUEST_CODE && resultCode == RESULT_OK) {
             val paths = data?.getStringArrayListExtra(VideoPicker.EXTRA_VIDEO_PATH)
             Log.i(TAG, "PATHS: $paths")
-
+            viewAdapter.add(MessageVideo(paths!!.first()))
         }
 
         if (requestCode == ImagePicker.IMAGE_PICKER_REQUEST_CODE && resultCode == RESULT_OK) {
