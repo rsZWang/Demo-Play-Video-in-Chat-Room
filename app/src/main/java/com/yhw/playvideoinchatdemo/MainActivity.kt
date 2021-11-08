@@ -1,16 +1,20 @@
 package com.yhw.playvideoinchatdemo
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.inputmethod.InputMethodManager
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.lassi.common.utils.KeyUtils
+import com.lassi.data.media.MiMedia
+import com.lassi.domain.media.LassiOption
+import com.lassi.domain.media.MediaType
+import com.lassi.presentation.builder.Lassi
 import com.yhw.playvideoinchatdemo.databinding.ActivityMainBinding
-import net.alhazmy13.mediapicker.Image.ImagePicker
-import net.alhazmy13.mediapicker.Video.VideoPicker
-
 
 class MainActivity : AppCompatActivity() {
 
@@ -20,6 +24,8 @@ class MainActivity : AppCompatActivity() {
 
     private val binding: ActivityMainBinding by lazy { ActivityMainBinding.inflate(layoutInflater) }
     private val viewAdapter = ChatRoomRecyclerViewAdapter()
+
+    private lateinit var receiveData: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,15 +37,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.albumButton.setOnClickListener {
-            VideoPicker.Builder(this)
-                .mode(VideoPicker.Mode.CAMERA_AND_GALLERY)
-                .enableDebuggingMode(true)
-                .directory(VideoPicker.Directory.DEFAULT)
-                .build()
+            setupPicker()
         }
 
         binding.sendButton.setOnClickListener {
-            Log.i(TAG, "SEND!!")
             val text = binding.textEditText.text.toString()
             if (text.isNotEmpty()) {
                 viewAdapter.add(MessageText(text))
@@ -48,23 +49,48 @@ class MainActivity : AppCompatActivity() {
                     .hideSoftInputFromWindow(binding.textEditText.windowToken, 0)
             }
         }
+
+        receiveData = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            if (it.resultCode == Activity.RESULT_OK) {
+                val selectedMedia = it.data?.getSerializableExtra(KeyUtils.SELECTED_MEDIA) as ArrayList<MiMedia>
+                if (!selectedMedia.isNullOrEmpty()) {
+                    viewAdapter.add(MessageVideo(selectedMedia[0].path!!))
+                }
+            }
+        }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
+    private fun setupPicker() {
 
-        Log.i(TAG, "requestCode: $requestCode,  resultCode: $resultCode")
+        val intent = Lassi(this)
+            .with(LassiOption.CAMERA_AND_GALLERY) // choose Option CAMERA, GALLERY or CAMERA_AND_GALLERY
+            .setMaxCount(5)
+            .setGridSize(3)
+            .setMediaType(MediaType.VIDEO) // MediaType : VIDEO IMAGE, AUDIO OR DOC
+//            .setCompressionRation(10) // compress image for single item selection (can be 0 to 100)
+//            .setMinTime(15) // for MediaType.VIDEO only
+//            .setMaxTime(30) // for MediaType.VIDEO only
+//            .setSupportedFileTypes("mp4", "mkv", "webm", "avi", "flv", "3gp") // Filter by limited media format (Optional)
+//            .setMinFileSize(100) // Restrict by minimum file size
+//            .setMaxFileSize(1024) //  Restrict by maximum file size
+            .disableCrop() // to remove crop from the single image selection (crop is enabled by default for single image)
+            /*
+             * Configuration for  UI
+             */
+//            .setStatusBarColor(R.color.colorPrimaryDark)
+//            .setToolbarResourceColor(R.color.colorPrimary)
+//            .setProgressBarColor(R.color.colorAccent)
+//            .setPlaceHolder(R.drawable.ic_image_placeholder)
+//            .setErrorDrawable(R.drawable.ic_image_placeholder)
+//            .setSelectionDrawable(R.drawable.ic_checked_media)
+//            .setCropType(CropImageView.CropShape.RECTANGLE) // choose shape for cropping after capturing an image from camera (for MediaType.IMAGE only)
+//            .setCropAspectRatio(1, 1) // define crop aspect ratio for cropping after capturing an image from camera (for MediaType.IMAGE only)
+//            .enableFlip() // Enable flip image option while image cropping (for MediaType.IMAGE only)
+//            .enableRotate() // Enable rotate image option while image cropping (for MediaType.IMAGE only)
+            .enableActualCircleCrop() // Enable actual circular crop (only for MediaType.Image and CropImageView.CropShape.OVAL)
+            .build()
 
-        if (requestCode == VideoPicker.VIDEO_PICKER_REQUEST_CODE && resultCode == RESULT_OK) {
-            val paths = data?.getStringArrayListExtra(VideoPicker.EXTRA_VIDEO_PATH)
-            Log.i(TAG, "PATHS: $paths")
-            viewAdapter.add(MessageVideo(paths!!.first()))
-        }
-
-        if (requestCode == ImagePicker.IMAGE_PICKER_REQUEST_CODE && resultCode == RESULT_OK) {
-            val mPaths: List<String>? = data?.getStringArrayListExtra(ImagePicker.EXTRA_IMAGE_PATH)
-            //Your Code
-        }
+        receiveData.launch(intent)
     }
 
 }

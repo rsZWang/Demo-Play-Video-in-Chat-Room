@@ -15,6 +15,8 @@ import com.yhw.playvideoinchatdemo.databinding.ViewHolderChatRoomTextBinding
 import com.yhw.playvideoinchatdemo.databinding.ViewHolderChatRoomVideoBinding
 import android.util.DisplayMetrics
 import android.R.string.no
+import android.util.TypedValue
+import java.io.File
 
 class ChatRoomRecyclerViewAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -65,22 +67,25 @@ class ChatRoomRecyclerViewAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>
     private inner class VideoViewHolder(val binding: ViewHolderChatRoomVideoBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(text: MessageType) {
             val uriString = (text as MessageVideo).videoUri
-            val uri = Uri.parse(uriString)
+            val uri = Uri.fromFile(File(uriString))
             val retriever = MediaMetadataRetriever()
-            retriever.setDataSource(uriString)
-            var width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)!!.toFloat()
-            var height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)!!.toFloat()
+            retriever.setDataSource(itemView.context, uri)
+            var videoWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)!!.toFloat()
+            var videoHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)!!.toFloat()
             retriever.release()
-            val displayMetrics: DisplayMetrics = itemView.context.resources.displayMetrics
-            val maxWidth = (displayMetrics.widthPixels/3*2).px.toFloat()
-            if (width > maxWidth) {
-                val scale = maxWidth/width
-                width = maxWidth
-                height *= scale
+
+            val displayMetrics: DisplayMetrics = Resources.getSystem().displayMetrics
+            val maxWidth = ((displayMetrics.widthPixels.toFloat()/3)*2)
+            if (videoWidth > maxWidth) {
+                val scale = maxWidth/videoWidth
+                videoWidth = maxWidth
+                videoHeight *= scale
             }
+
+            val factor = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1f, Resources.getSystem().displayMetrics)
             val newLayoutParams = binding.videoView.layoutParams
-            newLayoutParams.width = width.px.toInt()
-            newLayoutParams.height = height.px.toInt()
+            newLayoutParams.width = (videoWidth * factor).toInt()
+            newLayoutParams.height = (videoHeight * factor).toInt()
             binding.videoView.requestLayout()
             binding.videoView.setOnPreparedListener {
                 binding.videoView.start()
