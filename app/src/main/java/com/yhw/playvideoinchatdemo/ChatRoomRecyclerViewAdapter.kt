@@ -17,6 +17,12 @@ class ChatRoomRecyclerViewAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>
 
     private val messageTypeList = ArrayList<MessageType>()
 
+    fun add(message: MessageType) {
+        messageTypeList.add(message)
+        notifyDataSetChanged()
+//        notifyItemInserted(messageTypeList.size+1)
+    }
+
     override fun getItemCount(): Int = messageTypeList.size
 
     override fun getItemViewType(position: Int): Int =
@@ -28,34 +34,26 @@ class ChatRoomRecyclerViewAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
         when (viewType) {
-            TEXT -> TextViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.view_holder_chat_room_text, parent, false))
-            PICTURE -> TextViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.view_holder_chat_room_text, parent, false))
-            else -> VideoViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.view_holder_chat_room_video, parent, false))
+            TEXT -> TextViewHolder(ViewHolderChatRoomTextBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+            PICTURE -> TextViewHolder(ViewHolderChatRoomTextBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+            else -> VideoViewHolder(ViewHolderChatRoomVideoBinding.inflate(LayoutInflater.from(parent.context), parent, false))
         }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
-            is TextViewHolder -> holder.bind()
-            is VideoViewHolder -> holder.bind()
+            is TextViewHolder -> holder.bind(messageTypeList[position])
+            is VideoViewHolder -> holder.bind(messageTypeList[position])
         }
     }
 
-    private inner class TextViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-
-        private val binding = ViewHolderChatRoomTextBinding.bind(view)
-
-        fun bind() {
-
-
-
+    private inner class TextViewHolder(val binding: ViewHolderChatRoomTextBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(text: MessageType) {
+            binding.textGchatMessageMe.text = (text as MessageText).text
         }
     }
 
-    private inner class VideoViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-
-        private val binding = ViewHolderChatRoomVideoBinding.bind(view)
-
-        fun bind() {
+    private inner class VideoViewHolder(val binding: ViewHolderChatRoomVideoBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(text: MessageType) {
 
         }
     }

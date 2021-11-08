@@ -2,9 +2,15 @@ package com.yhw.playvideoinchatdemo
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.yhw.playvideoinchatdemo.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        const val TAG = "MainActivity"
+    }
 
     private lateinit var binding: ActivityMainBinding
 
@@ -12,11 +18,20 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(R.layout.activity_main)
+        setContentView(binding.root)
+
+        val viewAdapter = ChatRoomRecyclerViewAdapter()
+
+        with(binding.chatRecyclerView) {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = viewAdapter
+        }
 
         binding.sendButton.setOnClickListener {
-            val text = binding.textEditText.toString()
+            Log.i(TAG, "SEND!!")
+            val text = binding.textEditText.text.toString()
             if (text.isNotEmpty()) {
+                viewAdapter.add(MessageText(text))
                 binding.textEditText.text?.clear()
             }
         }
