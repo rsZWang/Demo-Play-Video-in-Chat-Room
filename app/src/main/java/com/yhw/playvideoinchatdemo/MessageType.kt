@@ -13,3 +13,7 @@ class MessagePicture(
 class MessageVideo(
     val videoUri: String
 ): MessageType()
+
+class MessageYT(
+    val ytId: String
+): MessageType()

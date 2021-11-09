@@ -4,6 +4,9 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,6 +18,8 @@ import com.lassi.domain.media.LassiOption
 import com.lassi.domain.media.MediaType
 import com.lassi.presentation.builder.Lassi
 import com.yhw.playvideoinchatdemo.databinding.ActivityMainBinding
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 class MainActivity : AppCompatActivity() {
 
@@ -43,12 +48,20 @@ class MainActivity : AppCompatActivity() {
         binding.sendButton.setOnClickListener {
             val text = binding.textEditText.text.toString()
             if (text.isNotEmpty()) {
-                viewAdapter.add(MessageText(text))
+                val ytId = extractYTId(text)
+                Log.i(TAG, "ytId: $ytId")
+                if (ytId.isNullOrEmpty()) {
+                    viewAdapter.add(MessageText(text))
+                } else {
+                    viewAdapter.add(MessageYT(ytId))
+                }
                 binding.textEditText.text?.clear()
                 (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
                     .hideSoftInputFromWindow(binding.textEditText.windowToken, 0)
             }
         }
+
+        binding.textEditText.setText("https://www.youtube.com/watch?v=Ow3awqJwg1E")
 
         receiveData = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             if (it.resultCode == Activity.RESULT_OK) {
@@ -58,6 +71,20 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+//        Handler(Looper.getMainLooper()).postDelayed({
+//            viewAdapter.add(MessageYT(extractYTId()!!))
+//        }, 2000)
+    }
+
+    fun extractYTId(url: String): String? {
+        var vId: String? = null
+        val pattern: Pattern = Pattern.compile("^(?:https?:)?//[^/]*(?:youtube(?:-nocookie)?\\.com|youtu\\.be).*[=/]([-\\w]{11})(?:\\?|=|&|$)", Pattern.CASE_INSENSITIVE)
+        val matcher: Matcher = pattern.matcher(url)
+        if (matcher.matches()) {
+            vId = matcher.group(1)
+        }
+        return vId
     }
 
     private fun setupPicker() {

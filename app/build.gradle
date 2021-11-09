@@ -52,4 +52,5 @@ dependencies {
     api "com.google.android.material:material:${google_material}"
 
     implementation 'com.github.Mindinventory:Lassi:0.2.2'
+    implementation 'com.pierfrancescosoffritti.androidyoutubeplayer:core:10.0.5'
 }
